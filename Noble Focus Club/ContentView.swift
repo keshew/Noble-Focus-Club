@@ -260,71 +260,73 @@ struct ClubReleaseShell: View {
     @Namespace private var tabAnimation
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            ZStack {
-                NavigationStack { ClubHomeReleaseView() }
-                    .opacity(selected == .lounge ? 1 : 0)
-                    .allowsHitTesting(selected == .lounge)
+        ZStack {
+            NavigationStack { ClubHomeReleaseView() }
+                .opacity(selected == .lounge ? 1 : 0)
+                .allowsHitTesting(selected == .lounge)
 
-                NavigationStack { ArenaGamesReleaseView() }
-                    .opacity(selected == .arena ? 1 : 0)
-                    .allowsHitTesting(selected == .arena)
+            NavigationStack { ArenaGamesReleaseView() }
+                .opacity(selected == .arena ? 1 : 0)
+                .allowsHitTesting(selected == .arena)
 
-                NavigationStack { VaultReleaseView() }
-                    .opacity(selected == .vault ? 1 : 0)
-                    .allowsHitTesting(selected == .vault)
+            NavigationStack { VaultReleaseView() }
+                .opacity(selected == .vault ? 1 : 0)
+                .allowsHitTesting(selected == .vault)
 
-                NavigationStack { MissionsReleaseView() }
-                    .opacity(selected == .missions ? 1 : 0)
-                    .allowsHitTesting(selected == .missions)
+            NavigationStack { MissionsReleaseView() }
+                .opacity(selected == .missions ? 1 : 0)
+                .allowsHitTesting(selected == .missions)
 
-                NavigationStack { MemberReleaseView() }
-                    .opacity(selected == .member ? 1 : 0)
-                    .allowsHitTesting(selected == .member)
-            }
-            .safeAreaInset(edge: .bottom) {
-                Color.clear.frame(height: 100)
-            }
+            NavigationStack { MemberReleaseView() }
+                .opacity(selected == .member ? 1 : 0)
+                .allowsHitTesting(selected == .member)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            bottomTabs
+        }
+    }
 
-            HStack(spacing: 6) {
-                ForEach(ClubTab.allCases, id: \.title) { tab in
-                    Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) {
-                            selected = tab
-                        }
-                    } label: {
-                        VStack(spacing: 5) {
-                            Image(systemName: tab.icon)
-                                .font(.system(size: 15, weight: .bold))
-                            Text(tab.title)
-                                .font(.system(size: 11, weight: .semibold))
-                        }
-                        .foregroundStyle(selected == tab ? Color.black.opacity(0.86) : Luxe.textMuted)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background {
-                            if selected == tab {
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Luxe.accent)
-                                    .matchedGeometryEffect(id: "tab", in: tabAnimation)
-                            }
+    private var bottomTabs: some View {
+        HStack(spacing: 6) {
+            ForEach(ClubTab.allCases, id: \.title) { tab in
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) {
+                        selected = tab
+                    }
+                } label: {
+                    VStack(spacing: 5) {
+                        Image(systemName: tab.icon)
+                            .font(.system(size: 15, weight: .bold))
+                        Text(tab.title)
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundStyle(selected == tab ? Color.black.opacity(0.86) : Luxe.textMuted)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: 58)
+                    .background {
+                        if selected == tab {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Luxe.accent)
+                                .matchedGeometryEffect(id: "tab", in: tabAnimation)
                         }
                     }
-                    .buttonStyle(.plain)
                 }
+                .buttonStyle(.plain)
             }
-            .padding(8)
-            .background(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(Luxe.cardDeep.opacity(0.96))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                    )
-            )
-            .padding(.horizontal, 14)
-            .padding(.bottom, 12)
         }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(Luxe.cardDeep.opacity(0.98))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, 14)
+        .padding(.top, 8)
+        .padding(.bottom, 8)
+        .background(Luxe.bgBottom.opacity(0.92))
     }
 }
 
@@ -457,8 +459,9 @@ struct ClubHomeReleaseView: View {
                 }
                 .luxeCard()
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
         .toolbar(.hidden, for: .navigationBar)
     }
@@ -578,8 +581,9 @@ struct ArenaGamesReleaseView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
         .toolbar(.hidden, for: .navigationBar)
     }
@@ -718,8 +722,9 @@ struct PulseTapDetailReleaseView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -841,6 +846,7 @@ struct PulseTapLiveReleaseView: View {
             Spacer(minLength: 0)
         }
         .padding(16)
+        .padding(.bottom, 120)
         .navigationTitle(practiceMode ? "Ember Gate Practice" : "Ember Gate")
         .navigationBarTitleDisplayMode(.inline)
         .onReceive(timer) { _ in
@@ -962,8 +968,9 @@ struct CrownLockDetailReleaseView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -1052,6 +1059,7 @@ struct CrownLockLiveReleaseView: View {
             Spacer(minLength: 0)
         }
         .padding(16)
+        .padding(.bottom, 120)
         .navigationTitle(practiceMode ? "Prism Brake Practice" : "Prism Brake")
         .navigationBarTitleDisplayMode(.inline)
         .onReceive(timer) { _ in
@@ -1174,8 +1182,9 @@ struct VelvetTraceDetailReleaseView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -1314,6 +1323,7 @@ struct VelvetTraceLiveReleaseView: View {
             Spacer(minLength: 0)
         }
         .padding(16)
+        .padding(.bottom, 120)
         .navigationTitle(practiceMode ? "Thread Runner Practice" : "Thread Runner")
         .navigationBarTitleDisplayMode(.inline)
         .onReceive(timer) { _ in
@@ -1390,8 +1400,9 @@ struct GenericGameDetailReleaseView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
         .alert("Playable Soon", isPresented: $showHint) {
             Button("OK", role: .cancel) { }
@@ -1463,8 +1474,9 @@ struct GameResultReleaseView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
         .navigationTitle("Result")
         .navigationBarTitleDisplayMode(.inline)
@@ -1514,8 +1526,9 @@ struct ActiveSessionReleaseView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
     }
 
@@ -1578,8 +1591,9 @@ struct SessionCompleteReleaseView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
     }
 }
@@ -1646,8 +1660,9 @@ struct VaultReleaseView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
         .toolbar(.hidden, for: .navigationBar)
     }
@@ -1680,8 +1695,9 @@ struct RelicDetailReleaseView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
     }
 }
@@ -1762,8 +1778,9 @@ struct MissionsReleaseView: View {
 
                 WeeklyMissionBoard()
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
         .toolbar(.hidden, for: .navigationBar)
     }
@@ -1824,8 +1841,9 @@ struct BoostInventoryReleaseView: View {
                 BoostEntryCard(title: "Reward Boost", detail: "Adds +20% Focus Points after one game.", status: "Locked", action: "Unlock at 3-day streak")
                 BoostEntryCard(title: "Time Boost", detail: "Adds +10 seconds to timed games.", status: "Available", action: "Activate")
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
     }
 }
@@ -1912,8 +1930,9 @@ struct MemberReleaseView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
         .toolbar(.hidden, for: .navigationBar)
     }
@@ -1937,8 +1956,9 @@ struct RanksReleaseView: View {
                     .foregroundStyle(Luxe.textMuted)
                     .luxeCard()
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -2008,8 +2028,9 @@ struct SettingsReleaseView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 150)
         }
         .alert(item: $activeAlert) { alert in
             switch alert {
