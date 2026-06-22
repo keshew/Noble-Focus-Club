@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		86A3B9752FD5E14E00B8DF6B /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 86A3B9742FD5E14E00B8DF6B /* FirebaseCore */; };
 		86A3B9772FD5E14E00B8DF6B /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 86A3B9762FD5E14E00B8DF6B /* FirebaseMessaging */; };
+		86AD27C7B1A0000000000001 /* AdjustSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 86AD27C7B1A0000000000003 /* AdjustSdk */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				86AD27C7B1A0000000000001 /* AdjustSdk in Frameworks */,
 				86A3B9772FD5E14E00B8DF6B /* FirebaseMessaging in Frameworks */,
 				86A3B9752FD5E14E00B8DF6B /* FirebaseCore in Frameworks */,
 			);
@@ -72,6 +74,7 @@
 			);
 			name = "Noble Focus Club";
 			packageProductDependencies = (
+				86AD27C7B1A0000000000003 /* AdjustSdk */,
 				86A3B9742FD5E14E00B8DF6B /* FirebaseCore */,
 				86A3B9762FD5E14E00B8DF6B /* FirebaseMessaging */,
 			);
@@ -104,6 +107,7 @@
 			mainGroup = 86F449442FCDEDDD0032CF8D;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				86AD27C7B1A0000000000005 /* XCRemoteSwiftPackageReference "ios_sdk" */,
 				86A3B9732FD5E14E00B8DF6B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -268,6 +272,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Noble-Focus-Club-Info.plist";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is required to scan QR codes and attach game-related content.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "We use this identifier to personalize your experience and improve app performance.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -278,7 +284,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.app.NobleFocusClub;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -303,6 +309,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Noble-Focus-Club-Info.plist";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is required to scan QR codes and attach game-related content.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "We use this identifier to personalize your experience and improve app performance.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -313,7 +321,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.app.NobleFocusClub;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -358,6 +366,14 @@
 				minimumVersion = 12.14.0;
 			};
 		};
+		86AD27C7B1A0000000000005 /* XCRemoteSwiftPackageReference "ios_sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/adjust/ios_sdk";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -370,6 +386,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 86A3B9732FD5E14E00B8DF6B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseMessaging;
+		};
+		86AD27C7B1A0000000000003 /* AdjustSdk */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 86AD27C7B1A0000000000005 /* XCRemoteSwiftPackageReference "ios_sdk" */;
+			productName = AdjustSdk;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

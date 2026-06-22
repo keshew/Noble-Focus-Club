@@ -1,14 +1,40 @@
+import AdjustSdk
+import AppTrackingTransparency
 import FirebaseCore
 import FirebaseMessaging
 import Foundation
 import UIKit
 import UserNotifications
 
+private let adjustAppToken = "42vfxxdkrq2o"
+private let adjustEnvironment = ADJEnvironmentProduction
+
+final class AdjustAttributionHandler: NSObject, AdjustDelegate {
+    func adjustAttributionChanged(_ attribution: ADJAttribution?) {
+        guard let attribution else { return }
+
+        if #available(iOS 14, *),
+           ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
+            return
+        }
+
+        guard let jsonResponse = attribution.jsonResponse,
+              let data = try? JSONSerialization.data(withJSONObject: jsonResponse, options: []),
+              let jsonString = String(data: data, encoding: .utf8) else {
+            UserDefaults.standard.removeObject(forKey: "k_adj_attr")
+            return
+        }
+
+        UserDefaults.standard.set(jsonString, forKey: "k_adj_attr")
+    }
+}
+
 final class Z9Bridge: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
     static var zMask = UIInterfaceOrientationMask.allButUpsideDown
     private static let qA17 = DispatchQueue(label: "q.z.17")
     private static var sA17: String = ""
     private static var tA17: Date = .distantPast
+    private let adjustAttributionHandler = AdjustAttributionHandler()
 
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
         Z9Bridge.zMask
@@ -24,6 +50,11 @@ final class Z9Bridge: NSObject, UIApplicationDelegate, UNUserNotificationCenterD
 
         Messaging.messaging().delegate = self
         Messaging.messaging().isAutoInitEnabled = true
+
+        let adjustConfig = ADJConfig(appToken: adjustAppToken, environment: adjustEnvironment)
+        adjustConfig?.delegate = adjustAttributionHandler
+        Adjust.initSdk(adjustConfig)
+
         Messaging.messaging().token { token, error in
             if let error {
                 print("a0.e \(error.localizedDescription)")
