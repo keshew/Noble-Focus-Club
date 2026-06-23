@@ -1,4 +1,4 @@
- workflows:
+workflows:
   sample-workflow:
     name: NobleFocusClub workflow
     max_build_duration: 120
@@ -10,7 +10,6 @@
         distribution_type: app_store
         bundle_identifier: com.app.NobleFocusClub
       vars:
-        APP_STORE_CONNECT_KEY: NobleFocusClub_apikey
         APP_STORE_APPLE_ID: 6775577710
         BUNDLE_ID: "com.app.NobleFocusClub"
         XCODE_PROJECT: "Noble Focus Club.xcodeproj"
@@ -19,11 +18,17 @@
       - name: Set up provisioning profiles settings on Xcode project
         script: xcode-project use-profiles
       - name: Increment build number
-        script: | 
+        script: |
           #!/bin/sh
           cd $CM_BUILD_DIR
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID")
-          agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
+          LATEST_BUILD_NUMBER=${LATEST_BUILD_NUMBER:-0}
+          NEW_BUILD_NUMBER=${CM_BUILD_NUMBER:-0}
+          if [ "$NEW_BUILD_NUMBER" -le "$LATEST_BUILD_NUMBER" ]; then
+            NEW_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
+          fi
+          echo "Setting build number to $NEW_BUILD_NUMBER (latest App Store build: $LATEST_BUILD_NUMBER)"
+          agvtool new-version -all "$NEW_BUILD_NUMBER"
       - name: Build ipa for distribution
         script: |
           xcode-project build-ipa \
@@ -36,8 +41,7 @@
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
     publishing:
       app_store_connect:
-        api_key: $APP_STORE_CONNECT_KEY
         auth: integration
         submit_to_app_store: true
         cancel_previous_submissions: true
-        release_type: SCHEDULED
+        release_type: MANUAL
