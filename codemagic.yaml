@@ -34,15 +34,16 @@ workflows:
           xcode-project build-ipa \
             --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME"
+      - name: Publish ipa to App Store Connect
+        script: |
+          app-store-connect publish \
+            --path "build/ios/ipa/Noble Focus Club.ipa" \
+            --apple-id "$APP_STORE_APPLE_ID" \
+            --submit-to-app-store \
+            --cancel-previous-submissions \
+            --release-type MANUAL
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
-    publishing:
-      app_store_connect:
-        auth: integration
-        apple_id: $APP_STORE_APPLE_ID
-        submit_to_app_store: true
-        cancel_previous_submissions: true
-        release_type: MANUAL
