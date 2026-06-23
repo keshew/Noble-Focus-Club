@@ -2,7 +2,13 @@ import AdjustSdk
 import AdSupport
 import AppTrackingTransparency
 import SwiftUI
+import UserNotifications
 @preconcurrency import WebKit
+
+private func isCannotFindHost(_ error: Error) -> Bool {
+    let nsError = error as NSError
+    return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCannotFindHost
+}
 
 private enum S0: Equatable {
     case loading
@@ -29,7 +35,6 @@ private final class M0: ObservableObject {
     private var isBootstrapping = false
     private var didMakeA0 = false
     private var lastB1: String = ""
-    private var waitA0 = false
 
     @MainActor
     func start() {
@@ -39,12 +44,6 @@ private final class M0: ObservableObject {
             print("z skip start: session already created in this launch")
             return
         }
-        if !hasA0() {
-            print("z w0")
-            armA0()
-            return
-        }
-        waitA0 = false
         guard !isBootstrapping else { return }
         isBootstrapping = true
 
@@ -72,12 +71,6 @@ private final class M0: ObservableObject {
             print("z s2")
             return
         }
-        guard hasA0() else {
-            print("z n0")
-            phase = .native
-            return
-        }
-        waitA0 = false
         guard !isBootstrapping else { return }
         isBootstrapping = true
 
@@ -96,6 +89,8 @@ private final class M0: ObservableObject {
     }
 
     private func bootstrap(trigger: String) async {
+        await requestPushPermissionAndRegister()
+        try? await Task.sleep(nanoseconds: 500_000_000)
         await requestATTAndStoreIDFA()
         print("z bootstrap trigger=\(trigger)")
 
@@ -113,12 +108,7 @@ private final class M0: ObservableObject {
             return
         }
 
-        guard hasA0() else {
-            await MainActor.run { self.phase = .native }
-            return
-        }
-
-        let fcmToken = UserDefaults.standard.string(forKey: "k_f0") ?? ""
+        let fcmToken = UserDefaults.standard.string(forKey: "k_f0") ?? "null"
         print("z b0 \(trigger)")
 
         let storedClientID = (UserDefaults.standard.string(forKey: "k_c0") ?? "")
@@ -191,12 +181,6 @@ private final class M0: ObservableObject {
         }
     }
 
-    private func hasA0() -> Bool {
-        let token = (UserDefaults.standard.string(forKey: "k_f0") ?? "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        return !token.isEmpty && token.lowercased() != "null"
-    }
-
     @MainActor
     private func requestATTAndStoreIDFA() async {
         guard #available(iOS 14.5, *) else {
@@ -225,6 +209,21 @@ private final class M0: ObservableObject {
             ? ASIdentifierManager.shared().advertisingIdentifier.uuidString
             : ""
         UserDefaults.standard.set(idfa, forKey: "k_idfa")
+    }
+
+    @MainActor
+    private func requestPushPermissionAndRegister() async {
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+
+        if settings.authorizationStatus == .notDetermined {
+            do {
+                _ = try await center.requestAuthorization(options: [.alert, .badge, .sound])
+            } catch {
+            }
+        }
+
+        UIApplication.shared.registerForRemoteNotifications()
     }
 
     private func waitForAdjustAttribution(upToSeconds seconds: Int) async -> [String: Any] {
@@ -256,18 +255,6 @@ private final class M0: ObservableObject {
             "costCurrency": jsonDictionary["costCurrency"] as? String ?? "",
             "jsonResponse": jsonString
         ]
-    }
-
-    @MainActor
-    private func armA0() {
-        guard !waitA0 else { return }
-        waitA0 = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
-            guard let self else { return }
-            guard self.phase == .loading, !self.hasA0(), !self.isBootstrapping else { return }
-            print("z fallback native: fcmToken timeout")
-            self.phase = .native
-        }
     }
 
     private func prepA1() async {
@@ -314,6 +301,9 @@ private final class M0: ObservableObject {
                         return serviceLink
                     }
                 } catch {
+                    if isCannotFindHost(error) {
+                        return nil
+                    }
                     print("z pullA1 endpoint=\(endpoint) error=\(error.localizedDescription)")
                 }
             }
@@ -461,6 +451,9 @@ private final class M0: ObservableObject {
     }
 
     private func dropClearA0(reason: String) -> Bool {
+        if reason.contains("NSURLErrorDomain--1003") {
+            return true
+        }
         if reason.contains("NSURLErrorDomain-") {
             return false
         }
@@ -871,6 +864,10 @@ private final class C0Host: UIViewController, WKNavigationDelegate, WKUIDelegate
         if v3(nsError) {
             return
         }
+        if isCannotFindHost(nsError) {
+            v0(reason: "\(stage)-\(nsError.domain)-\(nsError.code)", for: webView)
+            return
+        }
         if v2(nsError, webView: webView, stage: stage) {
             return
         }
@@ -995,7 +992,6 @@ private final class C0Host: UIViewController, WKNavigationDelegate, WKUIDelegate
         guard error.domain == NSURLErrorDomain else { return false }
         switch error.code {
         case NSURLErrorTimedOut,
-             NSURLErrorCannotFindHost,
              NSURLErrorCannotConnectToHost,
              NSURLErrorNetworkConnectionLost,
              NSURLErrorDNSLookupFailed,

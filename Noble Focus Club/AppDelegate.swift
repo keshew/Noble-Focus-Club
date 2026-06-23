@@ -55,19 +55,6 @@ final class Z9Bridge: NSObject, UIApplicationDelegate, UNUserNotificationCenterD
         adjustConfig?.delegate = adjustAttributionHandler
         Adjust.initSdk(adjustConfig)
 
-        Messaging.messaging().token { token, error in
-            if let error {
-                print("a0.e \(error.localizedDescription)")
-                return
-            }
-            print("a0.v")
-            self.storeA0(token, source: "s0")
-        }
-
-        let authorizationOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-        UNUserNotificationCenter.current().requestAuthorization(options: authorizationOptions) { _, _ in }
-        application.registerForRemoteNotifications()
-
         if let userInfo = launchOptions?[.remoteNotification] as? [AnyHashable: Any] {
             Messaging.messaging().appDidReceiveMessage(userInfo)
             let pushIdentifier = storeB1(userInfo, source: "p0")
